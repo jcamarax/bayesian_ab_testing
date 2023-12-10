@@ -29,7 +29,17 @@ The dataset that will be used contains the following information :
 
 
 ## Statistical modelling
+To run the A/B test, the two populations of study are the:
+- control group : gorup of users that have only seen the PSA.
+- test group : group of users that have seen the advertisement from the marketing company.
+  
+The two metrics that will be analysed are the total ads and the conversion rate. Both will be assumed to be two random variables, meaning that the values are generated from a random process that will be modelised by statistical distributions.
 
+Most of the time, the normal distribution $` X \sim N(\mu,\sigma^2) `$ is used to describe metrics of a data analysis, without being realised. This distribution is great, indeed, because it is well know and has great properties (such as $`E[X] = \mu `$, $` VAR[X] = \sigma `$ and an estimator of $`\mu`$ is the arithmetic mean )   without considering the nature of the data. However, this law describes continuous random variables and not discrete random variables such as the total ads and conversation rate. For example, the binomial distribution $` X \sim B(n,p)`$ would probably better suited for the totals ads. Assuming the marketing campaign is run over a period of 30 days (n = 30) and asses whether each day the user has seen the ad (Yes or No question). So p would describe the propability that that a user see an ad on an aday (and 1-p the opposite)! As for the convertion rate, a simple bernouilli distribution would do the job $`X \sim B(p)`$, with p the proportion of people that brought the product after seing the ad!
+
+Note that to run the statistical tests, it will be assumed that all the users from a group belongs to the same statistical population. This is important to note because it means that two users from a group is assumed to have the same behaviour. In reality, it might be an assumption far from reality. Indeed, the behaviour from each user might come from a unique random process different from all to each other (that's why we need to watch for those outlier values!). But, for to run the A/B test, this assumption has to be made unless proven to be wrong.
+
+The statistical that I will use is the 2-sample t-test to compare the total ads seen by t
 
 ## Results 
 1. Frequentist approach
