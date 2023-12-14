@@ -6,25 +6,113 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+#Loading packages and file
+library(tidyverse)
+library(readxl)
+
+df <- read_csv("marketing_AB.csv")
+
 ```
 
-## R Markdown
+# Loading the data
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r market}
+#Checking fist rows
+glimpse(df) # data type of columns OK
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+#checking any missing velues
+any(is.na(df)) # no missing values
 
-```{r cars}
-summary(cars)
+#checking if any participants didn't see any ad
+which(df["total_ads"]==0)
 ```
 
-## Including Plots
+## Transforming the data 
 
-You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
+
+#Data transformation pipeline
+df <- df %>% 
+          select(-1) %>% #removing first column
+          rename_with(~str_replace_all(.x," ","_")) %>% #removing all underscores
+          mutate(test_group = case_when( #replacing ad to control and psa to control
+          test_group == "ad" ~ "test",
+          test_group == "psa" ~ "control")) %>% 
+          rename(group = test_group) #changing the column name of column test_group to test
+
+glimpse(df)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## EDA (explanatory descriptive analysis)
+
+```{r}
+#number of rows
+total_user <- nrow(df)
+print(glue::glue("the df has {total_user} rows"))
+
+
+#counting the different catergories
+df %>% group_by(converted) %>%
+          mutate(percentage_converted_total = round(n()/total_user*100,1),
+                 converted_total = n()) %>%
+          group_by(converted, group,percentage_converted_total,converted_total)%>%
+          summarise(converted_group = n()) %>%
+          mutate(percentage_converted_group = round(converted_group /converted_total*100,1)) %>%
+          arrange(group)
+```
+
+In this marketing campaign, it can be observed that only 2.5% of of the participants bought the product after watching an ad.
+
+```{r}
+#Plotting
+ggplot(df, aes(x = total_ads, fill = converted))+
+          geom_density(alpha =0.7) +
+          scale_x_log10()+
+          annotation_logticks(sides = "b")+
+          facet_grid(.~group)
+
+
+
+ggplot(df, aes(x = total_ads, fill = group))+
+          geom_density(alpha =0.7) +
+          scale_x_log10()+
+          annotation_logticks(sides = "b")+
+          facet_grid(.~converted) 
+
+ggplot(df %>% filter(converted==T), aes(x = total_ads, fill = group))+
+          geom_density(alpha =0.7) +
+          scale_x_log10()+
+          annotation_logticks(sides = "b")+
+          facet_grid(most_ads_day~.) 
+
+
+ggplot(df %>% filter(converted==T), aes(x = as.factor(most_ads_day), y = total_ads, color = group))+
+          geom_boxplot(alpha =0.7) +
+          scale_y_log10()+
+          annotation_logticks(sides = "l")
+
+ggplot(df %>% filter(converted==T), aes(x = as.factor(most_ads_hour), y = total_ads, color = group))+
+          geom_boxplot(alpha =0.7) +
+          scale_y_log10()+
+          annotation_logticks(sides = "l")
+#on voit qu'a 19h, 10h
+#0 faire mettre esimation mean et rajouter p value sur la grpahe pour comparaison par paire!
+
+```
+
+In this density plot, regardless of the groups, an increase of user conversion is observed when the total of ads is higher
+
+```{r}
+
+
+#Plotting
+ggplot(df, aes(x= group, y = log10(total_ads), fill = converted))+
+          geom_boxplot() 
+#Plotting
+ggplot(df, aes(x = log10(total_ads), fill = converted))+
+          geom_histogram(alpha =0.7) +
+          facet_grid(.~group)
+
+```
+
